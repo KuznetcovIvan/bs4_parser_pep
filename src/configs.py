@@ -17,7 +17,7 @@ def configure_argument_parser(available_models):
     )
     parser.add_argument(
         '-c',
-        '--clear_cache',
+        '--clear-cache',
         action='store_true',
         help='Очистка кеша'
     )

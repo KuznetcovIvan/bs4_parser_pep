@@ -9,7 +9,7 @@ from tqdm import tqdm
 from configs import configure_argument_parser, configure_logging
 from constants import BASE_DIR, EXPECTED_STATUS, MAIN_DOC_URL, PEPS_URL
 from outputs import control_output
-from utils import find_next_sibling_tag, find_tag, get_response, select_one_tag
+from utils import find_next_sibling_tag, find_tag, get_response
 
 
 def whats_new(session):
@@ -91,12 +91,18 @@ def pep(session):
     if response is None:
         return
     soup = BeautifulSoup(response.text, 'lxml')
-    tr_tags = soup.select('tbody tr')[:]
+    tr_tags = [
+        tr for tr in soup.find_all('tr') if tr.find_parent(
+            'table', class_='pep-zero-table docutils align-default'
+            )
+        ]
     status_counter = {}
-    for tr_tag in tqdm(tr_tags):
-        peps_page_statuses = (
-            EXPECTED_STATUS[select_one_tag(tr_tag, 'td abbr').text[1:]])
-        link = urljoin(PEPS_URL, select_one_tag(tr_tag, 'td a')['href'])
+    for tr_tag in tqdm(tr_tags, desc='Парсим статусы PEP'):
+        if tr_tag.find('th') is not None:
+            continue
+        link = urljoin(PEPS_URL, find_tag(tr_tag, 'a')['href'])
+        td_tag = find_tag(tr_tag, 'td')
+        peps_page_statuses = td_tag.text[1:]
         response = get_response(session, link)
         if response is None:
             continue
@@ -106,20 +112,22 @@ def pep(session):
             if dt_tag.text == 'Status:':
                 pep_page_status = find_next_sibling_tag(dt_tag, 'dd').text
                 break
-        if pep_page_status not in peps_page_statuses:
+        expected_status = EXPECTED_STATUS[peps_page_statuses]
+        if pep_page_status not in expected_status:
             logging.info(
                 f'Несовпадающие статусы: {link}\n'
                 f'Статус в карточке: {pep_page_status} '
-                f'Ожидаемые статусы: {peps_page_statuses}'
+                f'Ожидаемые статусы: {expected_status}'
             )
         status_counter[pep_page_status] = (
             status_counter.get(pep_page_status, 0) + 1
-            )
-    status_counter['Total'] = sum(status_counter.values())
+        )
+    sorted_status_counter = dict(sorted(status_counter.items()))
+    sorted_status_counter['Total'] = sum(sorted_status_counter.values())
     return [
         ('Статус', 'Количество'),
-        *[(status, count) for status, count in status_counter.items()]
-        ]
+        *[(status, count) for status, count in sorted_status_counter.items()]
+    ]
 
 
 MODE_TO_FUNCTION = {
