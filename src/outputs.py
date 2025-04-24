@@ -4,10 +4,12 @@ import logging
 
 from prettytable import PrettyTable
 
-from constants import BASE_DIR, DATETIME_FORMAT
+from constants import BASE_DIR, DATETIME_FORMAT, FILE_OUTPUT, PRETTY_OUTPUT
+
+FILE_SAVED_MESSAGE = 'Файл с результатами был сохранён: {}'
 
 
-def pretty_output(results):
+def pretty_output(results, *args):
     table = PrettyTable()
     table.field_names = results[0]
     table.align = 'l'
@@ -15,30 +17,30 @@ def pretty_output(results):
     print(table)
 
 
-def file_output(results, cli_args):
+def file_output(results, *args):
+    # Тесты падают при переносе BASE_DIR / 'results' в constants.py.
     results_dir = BASE_DIR / 'results'
     results_dir.mkdir(exist_ok=True)
-    parser_mode = cli_args.mode
-    now = dt.datetime.now()
-    now_formatted = now.strftime(DATETIME_FORMAT)
-    file_name = f'{parser_mode}_{now_formatted}.csv'
-    file_path = results_dir / file_name
+    file_path = (
+        results_dir /
+        f'{args[0].mode}_{dt.datetime.now().strftime(DATETIME_FORMAT)}.csv'
+    )
     with open(file_path, 'w', encoding='utf-8') as file:
-        writer = csv.writer(file, dialect='unix')
-        writer.writerows(results)
-    logging.info(f'Файл с результатами был сохранён: {file_path}')
+        csv.writer(file, dialect=csv.unix_dialect).writerows(results)
+    logging.info(FILE_SAVED_MESSAGE.format(file_path))
 
 
-def default_output(results):
+def default_output(results, *args):
     for row in results:
         print(*row)
 
 
+OUTPUT_TO_FUNCTION = {
+    PRETTY_OUTPUT: pretty_output,
+    FILE_OUTPUT: file_output,
+    None: default_output
+}
+
+
 def control_output(results, cli_args):
-    output = cli_args.output
-    if output == 'pretty':
-        pretty_output(results)
-    elif output == 'file':
-        file_output(results, cli_args)
-    else:
-        default_output(results)
+    OUTPUT_TO_FUNCTION.get(cli_args.output)(results, cli_args)

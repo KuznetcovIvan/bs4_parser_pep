@@ -1,43 +1,46 @@
-import logging
-
 from requests import RequestException
 
 from exceptions import ParserFindTagException
 
+GET_RESPONSE_MESSAGE = 'Возникла ошибка при загрузке страницы {} {}'
+FIND_TAG_MESSAGE = 'Не найден тег {} {}'
+ADD_FIND_TAG_MESSAGE = ' cо строкой \'{}\''
+FIND_NEXT_SIBLING_MESSAGE = 'После тега {} нет тега {}'
 
-def get_response(session, url):
+
+def get_response(session, url, encoding='utf-8'):
     """Перехват ошибки RequestException."""
     try:
         response = session.get(url)
-        response.encoding = 'utf-8'
+        response.encoding = encoding
         return response
-    except RequestException:
-        logging.exception(
-            f'Возникла ошибка при загрузке страницы {url}', stack_info=True
-        )
+    except RequestException as exception:
+        raise RuntimeError(GET_RESPONSE_MESSAGE.format(url, exception))
 
 
 def handle_tag_result(searched_tag, message):
     """Обработка результата поиска тега."""
     if searched_tag is None:
-        logging.error(message, stack_info=True)
         raise ParserFindTagException(message)
     return searched_tag
 
 
-def find_tag(soup, tag, attrs=None, string=None):
-    """Перехват ошибки поиска тега с использованием find."""
-    message = f'Не найден тег {tag} {attrs}'
-    if string is not None:
-        message += f' со строкой "{string}"'
+def find_tag(soup, tag, attrs=None, string=''):
+    """Поиск тега с использованием find.
+    Бросает исключение, если не найден."""
+    message = FIND_TAG_MESSAGE.format(tag, attrs)
+    if string:
+        message += ADD_FIND_TAG_MESSAGE.format(string)
     return handle_tag_result(
-        soup.find(tag, attrs=(attrs or {}), string=string), message
+        soup.find(tag, attrs={} if attrs is None else attrs, string=string),
+        message
     )
 
 
 def find_next_sibling_tag(tag, sibling_tag):
-    """Перехват ошибки, если следующий тег не найден."""
+    """Поиск следующего тега с использованием find_next_sibling.
+    Бросает исключение, если не найден."""
     return handle_tag_result(
         tag.find_next_sibling(sibling_tag),
-        f'После тега {tag.name} нет тега {sibling_tag}'
+        FIND_NEXT_SIBLING_MESSAGE.format(tag.name, sibling_tag)
     )
