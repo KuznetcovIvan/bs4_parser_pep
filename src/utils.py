@@ -1,4 +1,5 @@
-from requests import RequestException
+import requests
+from bs4 import BeautifulSoup
 
 from exceptions import ParserFindTagException
 
@@ -14,8 +15,9 @@ def get_response(session, url, encoding='utf-8'):
         response = session.get(url)
         response.encoding = encoding
         return response
-    except RequestException as exception:
-        raise RuntimeError(GET_RESPONSE_MESSAGE.format(url, exception))
+    except requests.RequestException as error:
+        raise ConnectionError(
+            GET_RESPONSE_MESSAGE.format(url, error))
 
 
 def handle_tag_result(searched_tag, message):
@@ -44,3 +46,8 @@ def find_next_sibling_tag(tag, sibling_tag):
         tag.find_next_sibling(sibling_tag),
         FIND_NEXT_SIBLING_MESSAGE.format(tag.name, sibling_tag)
     )
+
+
+def get_soup(session, url, features='lxml'):
+    """Возвращает объект BeautifulSoup для переданного URL"""
+    return BeautifulSoup(get_response(session, url).text, features=features)

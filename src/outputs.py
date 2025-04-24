@@ -4,7 +4,8 @@ import logging
 
 from prettytable import PrettyTable
 
-from constants import BASE_DIR, DATETIME_FORMAT, FILE_OUTPUT, PRETTY_OUTPUT
+from constants import (BASE_DIR, DATETIME_FORMAT, FILE_OUTPUT, PRETTY_OUTPUT,
+                       RESULTS_DIR_NAME)
 
 FILE_SAVED_MESSAGE = 'Файл с результатами был сохранён: {}'
 
@@ -18,8 +19,7 @@ def pretty_output(results, *args):
 
 
 def file_output(results, *args):
-    # Тесты падают при переносе BASE_DIR / 'results' в constants.py.
-    results_dir = BASE_DIR / 'results'
+    results_dir = BASE_DIR / RESULTS_DIR_NAME
     results_dir.mkdir(exist_ok=True)
     file_path = (
         results_dir /
@@ -35,7 +35,7 @@ def default_output(results, *args):
         print(*row)
 
 
-OUTPUT_TO_FUNCTION = {
+OUTPUT_TO_FUNCTIONS = {
     PRETTY_OUTPUT: pretty_output,
     FILE_OUTPUT: file_output,
     None: default_output
@@ -43,4 +43,4 @@ OUTPUT_TO_FUNCTION = {
 
 
 def control_output(results, cli_args):
-    OUTPUT_TO_FUNCTION.get(cli_args.output)(results, cli_args)
+    OUTPUT_TO_FUNCTIONS.get(cli_args.output)(results, cli_args)

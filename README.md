@@ -1,8 +1,16 @@
 # Парсер документации Python
 
+![Python](https://img.shields.io/badge/Python-3.9+-blue)
+![BeautifulSoup](https://img.shields.io/badge/BeautifulSoup-4.9.3-orange)
+![Requests](https://img.shields.io/badge/Requests-2.27.1-green)
+![Requests-Cache](https://img.shields.io/badge/Requests--Cache-1.0.0-yellow)
+
 Это парсер на Python, основанный на библиотеке BeautifulSoup (bs4) и предназначенный для извлечения и обработки данных с официальных сайтов [документации Python](https://docs.python.org/3/) и [предложений по улучшению Python (PEP)](https://peps.python.org/).
 
-В функционал входит:
+#### Со второй версией парсера реализованной на фреймворке **Scrapy** можно ознакомиться [тут](https://github.com/KuznetcovIvan/scrapy_parser_pep).
+___
+
+## В функционал входит:
 - парсинг ссылок на статьи «Что нового» для всех версий Python;
 - парсинг ссылок на страницы с документацией для всех версий Python;
 - скачивание архива с документацией в формате PDF для последней версии Python;
@@ -57,5 +65,14 @@ ___
 | `exceptions.py`  | Пользовательские исключения                                              |
 | `outputs.py`     | Обработка вывода: консоль и файлы                                        |
 
+___
+## Технологический стек
+- Python
+- BeautifulSoup (bs4)
+- requests
+- requests-cache
+- prettytable
+- logging
+- argparse
 ___
 ### Автор: [Иван Кузнецов](https://github.com/KuznetcovIvan) 
